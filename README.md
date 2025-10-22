@@ -13,3 +13,7 @@ A Node.js tool that analyzes your `pnpm-lock.yaml` file to identify which packag
 ## Installation
 
 1. Clone this repository:
+2. Run
+```shell
+   npm start
+```
