@@ -130,13 +130,12 @@ function extractPackagesByRegistry(lockPath, registryMap, defaultRegistry) {
  * Format and display the registry summary
  */
 function displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry, npmrcFiles) {
-    console.log('📦 Registry Summary');
+    console.log('## 📦 Registry Summary');
     console.log('📄 .npmrc files used:');
-    npmrcFiles.forEach(file => console.log(`   - ${file}`));
-    console.log(`🔧 Default registry: ${defaultRegistry}`);
-    console.log('\tOther:');
+    npmrcFiles.forEach(file => console.log(`\t${file}`));
+    console.log(`🔧 Registries:\n\tDefault → ${defaultRegistry}`);
     Object.entries(registryMap).forEach(([scope, registry]) => {
-        console.log(`\t🔧 ${scope} → ${registry}`);
+        console.log(`\t${scope} → ${registry}`);
     });
 
     const registries = Object.keys(packagesByRegistry);
@@ -146,12 +145,12 @@ function displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry
         return;
     }
 
-    console.log('⚠️  Packages from non-default registries:\n');
+    console.log('\n⚠️  Packages from non-default registries:');
     
     for (const registry of registries) {
         const packages = packagesByRegistry[registry].sort();
-        console.log(`📍 ${registry}`);
-        packages.forEach(pkg => console.log(`   - ${pkg}`));
+        console.log(`\t📍 ${registry}`);
+        packages.forEach(pkg => console.log(`\t${pkg}`));
         console.log();
     }
     
