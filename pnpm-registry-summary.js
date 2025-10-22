@@ -19,7 +19,7 @@ function findNpmrcFiles(lockfilePath) {
         path.join(os.homedir(), '.npmrc'), // User-level
     ];
 
-    // If lockfile is provided, check for project-level .npmrc
+    // If a lockfile is provided, check for project-level .npmrc
     if (lockfilePath) {
         const projectRoot = path.dirname(lockfilePath);
         locations.unshift(path.join(projectRoot, '.npmrc')); // Project-level takes precedence
@@ -64,74 +64,6 @@ function parseNpmrc(filePaths) {
 }
 
 /**
- * Extract packages by registry from pnpm-lock.yaml
- */
-function extractPackagesByRegistry(lockPath, registryMap, defaultRegistry) {
-    const packagesByRegistry = {};
-    
-    if (!fs.existsSync(lockPath)) {
-        throw new Error(`Lockfile not found: ${lockPath}`);
-    }
-
-    try {
-        const lockData = yaml.load(fs.readFileSync(lockPath, 'utf8'));
-        const packages = lockData?.packages || {};
-
-        for (const pkg of Object.keys(packages)) {
-            // Extract scope if it exists
-            const scopeMatch = pkg.match(/^(@[^/]+)\//);
-            
-            if (scopeMatch) {
-                const scope = scopeMatch[1];
-                const registry = registryMap[scope];
-                
-                // Only include packages with non-default registry
-                if (registry && registry !== defaultRegistry) {
-                    if (!packagesByRegistry[registry]) {
-                        packagesByRegistry[registry] = [];
-                    }
-                    packagesByRegistry[registry].push(pkg);
-                }
-            }
-        }
-    } catch (error) {
-        throw new Error(`Failed to parse lockfile: ${error.message}`);
-    }
-
-    return packagesByRegistry;
-}
-
-/**
- * Format and display the registry summary
- */
-function displaySummary(packagesByRegistry, defaultRegistry, npmrcFiles) {
-    console.log('📦 Registry Summary\n');
-    console.log('📄 .npmrc files used:');
-    npmrcFiles.forEach(file => console.log(`   - ${file}`));
-    console.log();
-    console.log(`🔧 Default registry: ${defaultRegistry}\n`);
-    
-    const registries = Object.keys(packagesByRegistry);
-    
-    if (registries.length === 0) {
-        console.log('✅ All packages use the default registry.');
-        return;
-    }
-
-    console.log('⚠️  Packages from non-default registries:\n');
-    
-    for (const registry of registries) {
-        const packages = packagesByRegistry[registry].sort();
-        console.log(`📍 ${registry}`);
-        packages.forEach(pkg => console.log(`   - ${pkg}`));
-        console.log();
-    }
-    
-    const totalPackages = Object.values(packagesByRegistry).flat().length;
-    console.log(`📊 Total: ${totalPackages} package(s) from ${registries.length} custom registr${registries.length === 1 ? 'y' : 'ies'}`);
-}
-
-/**
  * Extract scopes from pnpm-lock.yaml
  */
 function extractScopes(lockPath) {
@@ -155,6 +87,78 @@ function extractScopes(lockPath) {
 
     return scopes;
 }
+
+/**
+ * Extract packages by registry from pnpm-lock.yaml
+ */
+function extractPackagesByRegistry(lockPath, registryMap, defaultRegistry) {
+    const packagesByRegistry = {};
+
+    if (!fs.existsSync(lockPath)) {
+        throw new Error(`Lockfile not found: ${lockPath}`);
+    }
+
+    try {
+        const lockData = yaml.load(fs.readFileSync(lockPath, 'utf8'));
+        const packages = lockData?.packages || {};
+
+        for (const pkg of Object.keys(packages)) {
+            // Extract scope if it exists
+            const scopeMatch = pkg.match(/^(@[^/]+)\//);
+
+            if (scopeMatch) {
+                const scope = scopeMatch[1];
+                const registry = registryMap[scope];
+
+                // Only include packages with a non-default registry
+                if (registry && registry !== defaultRegistry) {
+                    if (!packagesByRegistry[registry]) {
+                        packagesByRegistry[registry] = [];
+                    }
+                    packagesByRegistry[registry].push(pkg);
+                }
+            }
+        }
+    } catch (error) {
+        throw new Error(`Failed to parse lockfile: ${error.message}`);
+    }
+
+    return packagesByRegistry;
+}
+
+/**
+ * Format and display the registry summary
+ */
+function displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry, npmrcFiles) {
+    console.log('📦 Registry Summary');
+    console.log('📄 .npmrc files used:');
+    npmrcFiles.forEach(file => console.log(`   - ${file}`));
+    console.log(`🔧 Default registry: ${defaultRegistry}`);
+    console.log('\tOther:');
+    Object.entries(registryMap).forEach(([scope, registry]) => {
+        console.log(`\t🔧 ${scope} → ${registry}`);
+    });
+
+    const registries = Object.keys(packagesByRegistry);
+    
+    if (registries.length === 0) {
+        console.log('✅ All packages use the default registry.');
+        return;
+    }
+
+    console.log('⚠️  Packages from non-default registries:\n');
+    
+    for (const registry of registries) {
+        const packages = packagesByRegistry[registry].sort();
+        console.log(`📍 ${registry}`);
+        packages.forEach(pkg => console.log(`   - ${pkg}`));
+        console.log();
+    }
+    
+    const totalPackages = Object.values(packagesByRegistry).flat().length;
+    console.log(`📊 Total: ${totalPackages} package(s) from ${registries.length} custom registr${registries.length === 1 ? 'y' : 'ies'}`);
+}
+
 
 /**
  * Main execution
@@ -181,9 +185,10 @@ function main() {
     try {
         const npmrcFiles = findNpmrcFiles(lockfilePath);
         const { registryMap, defaultRegistry } = parseNpmrc(npmrcFiles);
+        const scopes = extractScopes(lockfilePath);
         const packagesByRegistry = extractPackagesByRegistry(lockfilePath, registryMap, defaultRegistry);
         
-        displaySummary(packagesByRegistry, defaultRegistry, npmrcFiles);
+        displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry, npmrcFiles);
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);
         process.exit(1);
@@ -194,11 +199,12 @@ function main() {
 if (require.main === module) {
     main();
 }
-
-// Export for testing
-module.exports = {
-    parseNpmrc,
-    extractPackagesByRegistry,
-    resolveLockfilePath,
-    findNpmrcFiles
-};
+//
+// // Export for testing
+// module.exports = {
+//     parseNpmrc,
+//     extractScopes,
+//     extractPackagesByRegistry,
+//     resolveLockfilePath,
+//     findNpmrcFiles
+// };
