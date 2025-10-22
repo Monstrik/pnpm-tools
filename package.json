@@ -1,0 +1,17 @@
+{
+  "name": "pnpm-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node pnpm-registry-summary.js /Users/ayakovis/dev/dev-tools/single-docker-compose-setup/applications/nexa-gnal/fe/projects/shared-user-management-frontend/pnpm-lock.yaml",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.0",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}
