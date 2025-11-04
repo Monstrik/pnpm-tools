@@ -60,7 +60,7 @@ function parseNpmrc(filePaths) {
         }
     }
 
-    return { registryMap, defaultRegistry };
+    return {registryMap, defaultRegistry};
 }
 
 /**
@@ -139,21 +139,21 @@ function displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry
     });
 
     const registries = Object.keys(packagesByRegistry);
-    
+
     if (registries.length === 0) {
         console.log('✅ All packages use the default registry.');
         return;
     }
 
     console.log('\n⚠️  Packages from non-default registries:');
-    
+
     for (const registry of registries) {
         const packages = packagesByRegistry[registry].sort();
         console.log(`\t📍 ${registry}`);
         packages.forEach(pkg => console.log(`\t${pkg}`));
         console.log();
     }
-    
+
     const totalPackages = Object.values(packagesByRegistry).flat().length;
     console.log(`📊 Total: ${totalPackages} package(s) from ${registries.length} custom registr${registries.length === 1 ? 'y' : 'ies'}`);
 }
@@ -183,10 +183,10 @@ function main() {
 
     try {
         const npmrcFiles = findNpmrcFiles(lockfilePath);
-        const { registryMap, defaultRegistry } = parseNpmrc(npmrcFiles);
+        const {registryMap, defaultRegistry} = parseNpmrc(npmrcFiles);
         const scopes = extractScopes(lockfilePath);
         const packagesByRegistry = extractPackagesByRegistry(lockfilePath, registryMap, defaultRegistry);
-        
+
         displaySummary(scopes, registryMap, packagesByRegistry, defaultRegistry, npmrcFiles);
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);
